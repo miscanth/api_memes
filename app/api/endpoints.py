@@ -1,10 +1,12 @@
-from fastapi import status, HTTPException, APIRouter
+from fastapi import APIRouter, Depends, HTTPException
 
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.core.db import get_async_session
 from app.crud import create_meme, read_all_memes_from_db
 # get_meme_id_by_name
 from app.models import Memes
 from app.schemas import MemesBaseCreate, MemesBaseDB
-# from app.core.db import db
 
 
 router = APIRouter()
@@ -17,21 +19,22 @@ router = APIRouter()
 )
 async def create_new_meme(
         meme: MemesBaseCreate,
+        session: AsyncSession = Depends(get_async_session),
 ):
-    """meme_id = await get_meme_id_by_name(meme.name)
+    """meme_id = await get_meme_id_by_name(meme.name, session)
     # Если такой объект уже есть в базе - вызываем ошибку:
     if meme_id is not None:
         raise HTTPException(
             status_code=422,
             detail=' Мем с таким именем уже существует!',
         )"""
-    new_meme = await create_meme(meme)
+    new_meme = await create_meme(meme, session)
     return new_meme
 
 
 @router.get('/memes/', response_model=list[MemesBaseDB])
-async def get_all_memes():
-    return await read_all_memes_from_db()
+async def get_all_memes(session: AsyncSession = Depends(get_async_session)):
+    return await read_all_memes_from_db(session)
 
 
 
