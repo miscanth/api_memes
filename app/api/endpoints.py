@@ -1,12 +1,42 @@
 from fastapi import status, HTTPException, APIRouter
+
+from app.crud import create_meme, read_all_memes_from_db
+# get_meme_id_by_name
 from app.models import Memes
-from app.schemas import MemesBase
+from app.schemas import MemesBaseCreate, MemesBaseDB
 # from app.core.db import db
 
 
-"""router = APIRouter()
+router = APIRouter()
 
-@router.get('/memes', response_model=list[MemesBase], status_code=status.HTTP_200_OK)
+
+@router.post(
+        '/memes/',
+        response_model=MemesBaseDB,
+        response_model_exclude_none=True,
+)
+async def create_new_meme(
+        meme: MemesBaseCreate,
+):
+    """meme_id = await get_meme_id_by_name(meme.name)
+    # Если такой объект уже есть в базе - вызываем ошибку:
+    if meme_id is not None:
+        raise HTTPException(
+            status_code=422,
+            detail=' Мем с таким именем уже существует!',
+        )"""
+    new_meme = await create_meme(meme)
+    return new_meme
+
+
+@router.get('/memes/', response_model=list[MemesBaseDB])
+async def get_all_memes():
+    return await read_all_memes_from_db()
+
+
+
+
+"""@router.get('/memes', response_model=list[MemesBase], status_code=status.HTTP_200_OK)
 def get_all_memes():
     #Получить список всех мемов
     return db.query(Memes).all()

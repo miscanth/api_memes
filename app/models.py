@@ -4,5 +4,5 @@ from app.core.db import Base, engine
 
 class Memes(Base):
 
-    meme_text = Column(String(40), index=True)
+    meme_text = Column(String(100), index=True)
 

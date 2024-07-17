@@ -2,8 +2,7 @@ from fastapi import FastAPI
 from app.core.config import settings
 from app.core.db import engine
 from app.core.db import Base
-
-#from app.api.endpoints import router
+from app.api.endpoints import router
 
 
 app = FastAPI(
@@ -11,7 +10,7 @@ app = FastAPI(
     description=settings.app_description
 )
 
-"""app.include_router(router)
+app.include_router(router)
 
-Base.metadata.create_all(bind=engine)"""
+"""Base.metadata.create_all(bind=engine)"""
 # Base.metadata.drop_all(engine)
