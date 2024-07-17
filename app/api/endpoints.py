@@ -9,11 +9,14 @@ from app.models import Memes
 from app.schemas import MemesBaseCreate, MemesBaseDB
 
 
-router = APIRouter()
+router = APIRouter(
+    prefix='/memes',
+    tags=['Memes']
+)
 
 
 @router.post(
-        '/memes/',
+        '/',
         response_model=MemesBaseDB,
         response_model_exclude_none=True,
 )
@@ -32,8 +35,14 @@ async def create_new_meme(
     return new_meme
 
 
-@router.get('/memes/', response_model=list[MemesBaseDB])
-async def get_all_memes(session: AsyncSession = Depends(get_async_session)):
+@router.get(
+        '/',
+        response_model=list[MemesBaseDB],
+        response_model_exclude_none=True,
+)
+async def get_all_memes(
+    session: AsyncSession = Depends(get_async_session),
+):
     return await read_all_memes_from_db(session)
 
 
