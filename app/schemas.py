@@ -8,16 +8,20 @@ from pydantic import BaseModel, Field
         orm_mode = True"""
 
 
-class MemesBase(BaseModel):
+class MemeBase(BaseModel):
+    name : Optional[str] = Field(None, min_length=1, max_length=40)
     meme_text: Optional[str] = Field(None, min_length=5, max_length=100)
-    # description: Optional[str]
 
 
-class MemesBaseCreate(MemesBase):
-    meme_text: str = Field(..., min_length=5, max_length=100)
+class MemeBaseCreate(MemeBase):
+    name: str = Field(..., min_length=1, max_length=40)
 
 
-class MemesBaseDB(MemesBaseCreate):
+class MemeBaseUpdate(MemeBase):
+    pass
+
+
+class MemeBaseDB(MemeBaseCreate):
     id: int
 
     class Config:
