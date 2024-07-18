@@ -3,9 +3,13 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.db import get_async_session
-from app.crud import create_meme, get_meme_id_by_name, read_all_memes_from_db
+from app.crud import (
+    create_meme, get_meme_by_id,
+    get_meme_id_by_name, update_meme,
+    read_all_memes_from_db
+)
 from app.models import Meme
-from app.schemas import MemeBaseCreate, MemeBaseDB
+from app.schemas import MemeBaseCreate, MemeBaseDB, MemeBaseUpdate
 
 
 router = APIRouter(
@@ -23,15 +27,58 @@ async def create_new_meme(
         meme: MemeBaseCreate,
         session: AsyncSession = Depends(get_async_session),
 ):
-    meme_id = await get_meme_id_by_name(meme.name, session)
-    # Если такой объект уже есть в базе - вызываем ошибку:
+    await check_name_duplicate(meme.name, session)
+    new_meme = await create_meme(meme, session)
+    return new_meme
+
+
+@router.patch(
+    # ID обновляемого объекта будет передаваться path-параметром.
+    '/{meme_id}',
+    response_model=MemeBaseDB,
+    response_model_exclude_none=True,
+)
+async def partially_update_meme(
+        # ID обновляемого объекта.
+        meme_id: int,
+        # JSON-данные, отправленные пользователем.
+        obj_in: MemeBaseUpdate,
+        session: AsyncSession = Depends(get_async_session),
+):
+    # Получаем объект из БД по ID.
+    # В ответ ожидается либо None, либо объект класса MeetingRoom.
+    meme = await get_meme_by_id(
+        meme_id, session
+    )
+
+    if meme is None:
+        raise HTTPException(
+            status_code=404, 
+            detail='Мем не найден!'
+        )
+
+    if obj_in.name is not None:
+        # Если в запросе получено поле name — проверяем его на уникальность.
+        await check_name_duplicate(obj_in.name, session)
+
+    # Передаём в корутину все необходимые для обновления данные.
+    meme = await update_meme(
+        meme, obj_in, session
+    )
+    return meme
+
+
+# Корутина, проверяющая уникальность полученного имени.
+async def check_name_duplicate(
+        meme_name: str,
+        session: AsyncSession,
+) -> None:
+    meme_id = await get_meme_id_by_name(meme_name, session)
     if meme_id is not None:
         raise HTTPException(
             status_code=422,
-            detail=' Мем с таким именем уже существует!',
-        )
-    new_meme = await create_meme(meme, session)
-    return new_meme
+            detail='Мем с таким именем уже существует!',
+        ) 
 
 
 @router.get(
