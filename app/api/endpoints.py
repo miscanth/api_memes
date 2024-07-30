@@ -59,7 +59,7 @@ async def partially_update_meme(
 
     if obj_in.name is not None:
         # Если в запросе получено поле name — проверяем его на уникальность.
-        await check_name_duplicate(obj_in.name, session)
+        await check_name_duplicate(obj_in.name, meme_id, session)
 
     # Передаём в корутину все необходимые для обновления данные.
     meme = await update_meme(
@@ -68,17 +68,44 @@ async def partially_update_meme(
     return meme
 
 
+@router.put(
+    '/{meme_id}',
+    response_model=MemeBaseDB,
+    response_model_exclude_none=True,
+)
+async def fully_update_meme(
+    meme_id: int,
+    obj_in: MemeBaseUpdate,
+    session: AsyncSession = Depends(get_async_session),
+):
+    meme = await get_meme_by_id(
+        meme_id, session
+    )
+    if meme is None:
+        raise HTTPException(
+            status_code=404, 
+            detail='Мем не найден!'
+        )
+    # Проверяем уникальность полученного имени
+    await check_name_duplicate(obj_in.name, meme_id, session)
+    meme = await update_meme(
+        meme, obj_in, session
+    )
+    return meme
+
 # Корутина, проверяющая уникальность полученного имени.
 async def check_name_duplicate(
         meme_name: str,
+        meme_id: int,
         session: AsyncSession,
 ) -> None:
-    meme_id = await get_meme_id_by_name(meme_name, session)
-    if meme_id is not None:
-        raise HTTPException(
-            status_code=422,
-            detail='Мем с таким именем уже существует!',
-        ) 
+    search_meme_id = await get_meme_id_by_name(meme_name, session)
+    if search_meme_id is not None:
+        if search_meme_id != meme_id:
+            raise HTTPException(
+                status_code=422,
+                detail='Мем с таким именем уже существует!',
+            ) 
 
 
 @router.get(
