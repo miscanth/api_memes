@@ -1,6 +1,6 @@
 from typing import Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, validator
 
 
 """class OurBaseModel(BaseModel):
@@ -19,6 +19,12 @@ class MemeBaseCreate(MemeBase):
 
 class MemeBaseUpdate(MemeBase):
     pass
+
+    @validator('name')
+    def name_cannot_be_null(cls, value):
+        if value is None:
+            raise ValueError('Поле для имени мема не может быть пустым!')
+        return value
 
 
 class MemeBaseDB(MemeBaseCreate):

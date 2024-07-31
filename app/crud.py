@@ -46,6 +46,14 @@ async def read_all_memes_from_db(
     return db_memes.scalars().all()
 
 
+async def delete_meme(
+        db_meme: Meme,
+        session: AsyncSession,
+) -> Meme:
+    await session.delete(db_meme)
+    await session.commit()
+    return db_meme
+
 
 async def get_meme_id_by_name(
 meme_name: str,

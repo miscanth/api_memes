@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.db import get_async_session
 from app.crud import (
-    create_meme, get_meme_by_id,
+    create_meme, delete_meme, get_meme_by_id,
     get_meme_id_by_name, update_meme,
     read_all_memes_from_db
 )
@@ -27,7 +27,7 @@ async def create_new_meme(
         meme: MemeBaseCreate,
         session: AsyncSession = Depends(get_async_session),
 ):
-    await check_name_duplicate(meme.name, session)
+    await check_name_duplicate(meme.name, 0, session)
     new_meme = await create_meme(meme, session)
     return new_meme
 
@@ -46,7 +46,7 @@ async def partially_update_meme(
         session: AsyncSession = Depends(get_async_session),
 ):
     # Получаем объект из БД по ID.
-    # В ответ ожидается либо None, либо объект класса MeetingRoom.
+    # В ответ ожидается либо None, либо объект класса Meme
     meme = await get_meme_by_id(
         meme_id, session
     )
@@ -86,12 +86,36 @@ async def fully_update_meme(
             status_code=404, 
             detail='Мем не найден!'
         )
-    # Проверяем уникальность полученного имени
-    await check_name_duplicate(obj_in.name, meme_id, session)
+    if obj_in.name is not None:
+        await check_name_duplicate(obj_in.name, meme_id, session)
     meme = await update_meme(
         meme, obj_in, session
     )
     return meme
+
+
+@router.delete(
+    '/{meme_id}',
+    response_model=MemeBaseDB,
+    response_model_exclude_none=True,
+)
+async def remove_meme(
+    meme_id: int,
+    session: AsyncSession = Depends(get_async_session),
+):
+    meme = await get_meme_by_id(
+        meme_id, session
+    )
+    if meme is None:
+        raise HTTPException(
+            status_code=404, 
+            detail='Мем не найден!'
+        )
+    meme = await delete_meme(
+        meme, session
+    )
+    return meme
+
 
 # Корутина, проверяющая уникальность полученного имени.
 async def check_name_duplicate(
