@@ -59,13 +59,11 @@ async def get_meme_id_by_name(
 meme_name: str,
 session: AsyncSession,
 ) -> Optional[int]:
-    # Получаем объект класса Result.
     db_meme_id = await session.execute(
         select(Meme.id).where(
             Meme.name == meme_name
         )
     )
-    # Извлекаем из него конкретное значение.
     return db_meme_id.scalars().first()
 
 
@@ -73,11 +71,9 @@ async def get_meme_by_id(
 meme_id: int,
 session: AsyncSession,
 ) -> Optional[Meme]:
-    # Получаем объект класса Result.
     db_meme = await session.execute(
         select(Meme).where(
             Meme.id == meme_id
         )
     )
-    # Извлекаем из него конкретное значение.
     return db_meme.scalars().first()
